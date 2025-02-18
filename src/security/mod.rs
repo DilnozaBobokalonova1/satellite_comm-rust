@@ -15,5 +15,7 @@ pub mod decoding;
  *      3. A way for the signature and authentication to work at ground source.
  *      
  */
-pub mod encoding;
+pub mod encryption;
 pub mod signature;
+
+
