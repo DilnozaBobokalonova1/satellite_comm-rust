@@ -1,5 +1,5 @@
-pub mod auth;
-pub mod decoding;
+pub mod secure_comm;
+
 /**
  * The point of a security module is to ensure the information is sent and downloaded with the certain
  * set of agreements in mind. For example, if a satellite sends a packet to ground, it has to contain
@@ -16,6 +16,5 @@ pub mod decoding;
  *      
  */
 pub mod encryption;
+pub mod key_exchange;
 pub mod signature;
-
-

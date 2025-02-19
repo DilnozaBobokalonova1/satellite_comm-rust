@@ -27,7 +27,6 @@ Works efficiently on embedded systems and Rust implementations.
 Authenticated Encryption (AEAD) prevents tampering with messages.
 
 Example (Simplified XOR-based Stream Cipher):
-
 Plaintext:  H   E   L   L   O
 Binary:    0100 1000 0100 0101 0100 1100 0100 1100 0100 1111
 Keystream: 1100 0110 1010 0111 1001 0011 1101 1101 0110 1001
