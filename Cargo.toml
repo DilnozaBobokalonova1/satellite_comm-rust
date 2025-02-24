@@ -1,2 +1,12 @@
 [workspace]
 members = [ "sat_firmware","satellite_simulation", "stm32_firmware"]
+
+[profile.release]
+codegen-units = 1
+debug = true
+lto = true
+opt-level = "s"
+
+[profile.dev]
+debug = true
+opt-level = 0

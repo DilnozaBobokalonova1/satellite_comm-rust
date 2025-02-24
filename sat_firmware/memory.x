@@ -6,3 +6,6 @@ MEMORY
 
 _stack_start = ORIGIN(RAM) + LENGTH(RAM);
 _heap_size = 1024;
+
+PROVIDE(_vector_table = ORIGIN(FLASH));
+PROVIDE(_stext = _vector_table + 0x200);
