@@ -1,2 +1,2 @@
 [workspace]
-members = ["satellite_simulation", "stm32_firmware"]
+members = [ "sat_firmware","satellite_simulation", "stm32_firmware"]

@@ -1,11 +1,7 @@
 [package]
-name = "stm32_firmware"
+name = "sat_firmware"
 version = "0.1.0"
 edition = "2021"
-
-[[bin]]
-name = "stm32_firmware"
-path = "src/main.rs"
 
 [dependencies]
 cortex-m = "0.7"
