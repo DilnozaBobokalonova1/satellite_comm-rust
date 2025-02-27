@@ -99,11 +99,34 @@ impl Satellite {
         let angular_velocity =
             calculate_angular_velocity(self.get_current_speed(), self.orbital_radius); // w = v / r
 
-        let angle_to_ground =
-            (self.position.0 - ground_position.0).atan2(self.position.1 - ground_position.1);
+        // Satellite latitude -> radians
+        let theta_sat_lat = self.position.0.to_radians();
+        let theta_sat_lon = self.position.1.to_radians();
+        // Ground station latitude -> radians
+        let theta_ground_lat = ground_position.0.to_radians();
+        let theta_ground_lon = ground_position.1.to_radians();
 
-        // Time until closest approach (t = theta / w)
-        self.time_to_downlink = angle_to_ground.abs() / angular_velocity;
+        // Angular distance between satellite and ground using spherical law of cosines
+        let delta_theta = ((theta_sat_lat.sin() * theta_ground_lat.sin())
+            + (theta_sat_lat.cos()
+                * theta_ground_lat.cos()
+                * (theta_sat_lon - theta_ground_lon).cos()))
+        .acos();
+        let delta_theta_future = ((theta_sat_lat.sin() * theta_ground_lat.sin())
+            + ((theta_sat_lat.cos() * theta_ground_lat.cos()
+                + (theta_sat_lon + angular_velocity * 10.0)
+                - theta_ground_lon)
+                .cos()))
+        .acos();
+        let is_approaching = delta_theta_future < delta_theta;
+        if is_approaching {
+            // time until closest approach: t = theta / w
+            self.time_to_downlink = delta_theta / angular_velocity;
+        } else {
+            let full_orbit_time = 2.0 * std::f64::consts::PI / angular_velocity;
+            let time_until_next_phase = full_orbit_time - (delta_theta / angular_velocity);
+            self.time_to_downlink = time_until_next_phase;
+        }
     }
 
     /**

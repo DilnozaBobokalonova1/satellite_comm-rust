@@ -5,18 +5,18 @@ use cortex_m_rt::entry;
 use panic_halt as _; // Half on panic
 
 use core::fmt::Write;
-use heapless::String;
 use nb::block;
 use stm32l4xx_hal::{
     flash::Parts,
     gpio::{self, Edge, Input, PullUp},
-    pac::{self, exti, interrupt, syscfg, EXTI, NVIC, SYSCFG, USART2},
+    pac::{self, exti, syscfg, EXTI, NVIC, SYSCFG, USART2, interrupt},
     prelude::*,
     pwr::Pwr,
     rcc::{Clocks, Rcc},
     serial::{Config, Rx, Serial, Tx},
     time::Hertz,
 };
+use heapless::String;
 
 static mut TX: Option<Tx<USART2>> = None;
 
@@ -37,35 +37,8 @@ fn main() -> ! {
 
     // Configure the pin for a button press. It's accessible through AHB2 bus.
     let mut gpioa = dp.GPIOA.split(&mut rcc.ahb2);
-
-    let mut led = gpioa
-        .pa5
-        .into_push_pull_output(&mut gpioa.moder, &mut gpioa.otyper);
-    led.set_high();
-
     // let mut moder = gpioa.moder; // mode of the pin
     // let mut pupdr = gpioa.pupdr; // pull-up/pull-down state register
-
-    let tx_pin = gpioa
-        .pa2
-        .into_alternate(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrl);
-    let rx_pin = gpioa
-        .pa3
-        .into_alternate(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrl);
-
-    let serial = Serial::usart2(
-        dp.USART2,
-        (tx_pin, rx_pin),
-        Config::default().baudrate(115_200.bps()),
-        clocks,
-        &mut rcc.apb1r1,
-    );
-
-    let (mut tx, _) = serial.split();
-
-    for byte in b"System starting...\r\n" {
-        block!(tx.write(*byte)).ok();
-    }
 
     // the moder and pupdr will be modified as a result of this method call
     // needed for the clear ownership/one modification at a time on one pin
@@ -74,10 +47,6 @@ fn main() -> ! {
     let mut button = gpioa
         .pa0
         .into_pull_up_input(&mut gpioa.moder, &mut gpioa.pupdr);
-
-    for byte in b"Configuring button interrupt...\r\n" {
-        block!(tx.write(*byte)).ok();
-    }
 
     // Configure EXTI for button press.
     let mut exti: EXTI = dp.EXTI;
@@ -94,33 +63,36 @@ fn main() -> ! {
         NVIC::unmask(pac::Interrupt::EXTI0);
     }
 
-    for byte in b"Interrupt configured, ready!\r\n" {
-        block!(tx.write(*byte)).ok();
-    }
+    let tx_pin = gpioa
+        .pa2
+        .into_alternate(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrl);
+    let rx_pin = gpioa
+        .pa3
+        .into_alternate(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrl);
+
+    let serial = Serial::usart2(
+        dp.USART2,
+        (tx_pin, rx_pin),
+        Config::default().baudrate(115_200.bps()),
+        clocks,
+        &mut rcc.apb1r1,
+    );
+
+    let (tx, _) = serial.split();
 
     // Why is unsafe used?
-    // Global static variables are unsafe in Rust because they don’t enforce
-    // borrow checking like normal variables. If multiple parts of the code
-    // access TX at the same time, data races could occur. In this case, we
-    // ensure only one part of the code (EXTI0 interrupt handler) modifies
+    // Global static variables are unsafe in Rust because they don’t enforce 
+    // borrow checking like normal variables. If multiple parts of the code 
+    // access TX at the same time, data races could occur. In this case, we 
+    // ensure only one part of the code (EXTI0 interrupt handler) modifies 
     // TX, so we manually use unsafe to acknowledge this.
     unsafe {
         TX = Some(tx);
     }
-    // Blink LED to indicate we've reached the main loop
-    for _ in 0..5 {
-        led.toggle();
-        cortex_m::asm::delay(8_000_000); // Crude delay
-    }
 
-    // Turn off LED before entering sleep loop
-    led.set_low();
+    
 
     loop {
-        // Briefly flash LED so we know the device hasn't crashed
-        led.set_high();
-        cortex_m::asm::delay(100_000);
-        led.set_low();
         cortex_m::asm::wfi(); // low power mode until an interrupt occurs
     }
 }
@@ -133,7 +105,7 @@ fn EXTI0() {
     let dp = unsafe { pac::Peripherals::steal() };
     let exti = &dp.EXTI;
 
-    // clear EXTI0 interrupt flag by writing 1 to it;
+    // clear EXTI0 interrupt flag by writing 1 to it; 
     // we clear the flag to prevent repeated interrupts.
     exti.pr1.write(|w| w.pr0().set_bit());
 
@@ -147,7 +119,7 @@ fn send_downlink_request(lat: f32, long: f32) {
             // we don't have access to heap allocation
             let mut buffer = String::<64>::new();
             write!(&mut buffer, "DOWNLINK:{:.4},{:.4}\n", lat, long).unwrap();
-
+            
             for byte in buffer.as_bytes() {
                 block!(tx.write(*byte)).ok();
             }

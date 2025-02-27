@@ -1,7 +1,13 @@
-use crate::{common::calculate_euclid_distance, simulation::satellite::Satellite};
-use std::collections::HashMap;
+use crate::{
+    common::{
+        calculate_euclid_distance, calculate_future_satellite_position, SPEED_OF_LIGHT,
+        TIME_LOOKAHEAD_SECS,
+    },
+    simulation::satellite::Satellite,
+};
+use std::{cmp::min, collections::HashMap};
 
-use super::satellite::NeighboringSatelliteInformation;
+use super::{graph::Contact, satellite::NeighboringSatelliteInformation};
 
 const COMMUNICATION_RANGE: f64 = 1000.0;
 
@@ -36,49 +42,49 @@ const COMMUNICATION_RANGE: f64 = 1000.0;
 
 */
 
-pub fn create_satellites_map(
-    satellites: &HashMap<u32, Satellite>,
-) -> HashMap<u32, Vec<NeighboringSatelliteInformation>> {
+/**
+ * Computes a dynamic map of contacts between satellites. Each satellite
+ * has a list of Contact objects representing future communication windows.
+ */
+pub fn create_satellites_map(satellites: &HashMap<u32, Satellite>) -> HashMap<u32, Vec<Contact>> {
     let mut connections = HashMap::new();
 
     for (id1, sat1) in satellites.iter() {
-        let mut neighbors: Vec<NeighboringSatelliteInformation> = Vec::new();
+        let mut contact_list: Vec<Contact> = Vec::new();
 
         for (id2, sat2) in satellites.iter() {
             if id1 == id2 {
                 continue;
             }
-            // Current Euclidean distance
+            // Calculate the current Euclidean distance btw sat1 & sat2
             let distance_btw_sats = calculate_euclid_distance(&sat1.position, &sat2.position);
+            let predicted_distance = predict_future_distance(sat1, sat2, TIME_LOOKAHEAD_SECS);
 
-            // Compute angular velocity for orbital motion
-            let angular_velocity = sat2.get_current_speed() / sat2.orbital_radius; // w = v / r
-            let theta_change = angular_velocity * 10.0; // Predicting 10 sec ahead
-
-            // Predict future position using orbital movement
-            let predicted_x =
-                sat2.orbital_radius * (sat2.position.0.to_radians() + theta_change).cos();
-            let predicted_y =
-                sat2.orbital_radius * (sat2.position.1.to_radians() + theta_change).sin();
-            let predicted_position = (predicted_x, predicted_y);
-
-            // 10 sec lookahead to predict future position of sat2 based on velocity * time
-            let predicted_distance = calculate_euclid_distance(&sat1.position, &predicted_position);
-
+            // If within communication range (now or in 10 seconds), create a contact
             if distance_btw_sats <= COMMUNICATION_RANGE || predicted_distance <= COMMUNICATION_RANGE
             {
-                let mut neighbor_info = NeighboringSatelliteInformation::new(id2);
+                let start_time = sat1.time_to_downlink;
+                let end_time = start_time + sat1.communication_window;
+                let latency =
+                    (distance_btw_sats / SPEED_OF_LIGHT).min(predicted_distance / SPEED_OF_LIGHT); // Speed of light delay in ms
 
-                // FIX THIS, EITHER UPDATE OR GET BASED ON WHERE TO STORE INFO
-                neighbor_info.get_speed(sat2.get_current_speed());
-                neighbor_info.get_available_storage(sat2.get_satellite_storage());
-                neighbor_info.get_distance_from_source(distance_btw_sats);
-                neighbor_info.get_distance_from_ground(sat2.get_distance_from_ground());
-                neighbors.push(neighbor_info);
+                contact_list.push(Contact {
+                    destination: *id2,
+                    start_time,
+                    end_time,
+                    latency,
+                });
             }
         }
-        connections.insert(*id1, neighbors);
+        connections.insert(*id1, contact_list);
     }
 
     connections
+}
+
+fn predict_future_distance(sat1: &Satellite, sat2: &Satellite, time_step: f64) -> f64 {
+    calculate_euclid_distance(
+        &(&calculate_future_satellite_position(sat1, time_step)),
+        &(calculate_future_satellite_position(sat2, time_step)),
+    )
 }

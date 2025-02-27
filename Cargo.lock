@@ -920,19 +920,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "sat_firmware"
-version = "0.1.0"
-dependencies = [
- "cortex-m",
- "cortex-m-rt",
- "embedded-hal",
- "heapless",
- "nb 1.1.0",
- "panic-halt",
- "stm32l4xx-hal",
-]
-
-[[package]]
 name = "satellite_simulation"
 version = "0.1.0"
 dependencies = [

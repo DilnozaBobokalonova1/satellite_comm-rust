@@ -3,9 +3,17 @@ use crate::simulation::{satellite::Satellite, tracking::create_satellites_map};
 use rand::Rng;
 use std::collections::{HashMap, HashSet};
 
+#[derive(Debug, Clone)]
+pub struct Contact {
+    pub destination: u32,
+    pub start_time: f64,
+    pub end_time: f64,
+    pub latency: f64,
+}
+
 pub struct SatelliteNetwork {
     satellites: HashMap<u32, Satellite>,
-    connections_graph: HashMap<u32, Vec<NeighboringSatelliteInformation>>,
+    connections_graph: HashMap<u32, Vec<Contact>>,
 }
 
 impl SatelliteNetwork {
@@ -43,16 +51,21 @@ impl SatelliteNetwork {
      */
     pub fn update_satellite_graph(&mut self) {
         println!("🔄 Updating satellite communication graph...");
-        let neighbors_map: HashMap<u32, Vec<NeighboringSatelliteInformation>> =
-            create_satellites_map(&self.satellites);
+        let updated_graph: HashMap<u32, Vec<Contact>> = create_satellites_map(&self.satellites);
 
-        for (sat_id, new_neighbors) in neighbors_map {
-            if let Some(existing_neighbors) = self.connections_graph.get_mut(&sat_id) {
-                let old_set: HashSet<u32> = existing_neighbors.iter().map(|n| n.id).collect();
-                let new_set: HashSet<u32> = new_neighbors.iter().map(|n| n.id).collect();
+        // Make ASYNC
+        for (sat_id, new_contacts) in updated_graph {
+            // own the values, no need to borrow for now
+            if let Some(previous_contacts) = self.connections_graph.get_mut(&sat_id) {
+                let old_destinations: HashSet<u32> =
+                    previous_contacts.iter().map(|c| c.destination).collect();
+                let new_destinations: HashSet<u32> =
+                    new_contacts.iter().map(|c| c.destination).collect();
 
-                let lost_connections: Vec<&u32> = old_set.difference(&new_set).collect();
-                let new_connections: Vec<&u32> = new_set.difference(&old_set).collect();
+                let lost_connections: Vec<&u32> =
+                    old_destinations.difference(&new_destinations).collect();
+                let new_connections: Vec<&u32> =
+                    new_destinations.difference(&old_destinations).collect();
 
                 if !lost_connections.is_empty() {
                     println!(
@@ -66,14 +79,17 @@ impl SatelliteNetwork {
                         sat_id, new_connections
                     );
                 }
-                *existing_neighbors = new_neighbors; // update changed neighbors
+                *previous_contacts = new_contacts; // update changed neighbors
             } else {
                 println!(
                     "✅ New Satellite {} established in the network! With neighbors: {:?}",
                     sat_id,
-                    new_neighbors.iter().map(|n| n.id).collect::<Vec<_>>()
+                    new_contacts
+                        .iter()
+                        .map(|c| c.destination)
+                        .collect::<Vec<_>>()
                 );
-                self.connections_graph.insert(sat_id, new_neighbors); // add new sat as neighbors
+                self.connections_graph.insert(sat_id, new_contacts); // add new sat as neighbors
             }
         }
     }

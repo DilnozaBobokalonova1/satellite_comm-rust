@@ -65,5 +65,3 @@ llvm-size target/thumbv7em-none-eabihf/debug/sat_firmware
 
 For a full disassembly:
 llvm-objdump --disassemble target/thumbv7em-none-eabihf/debug/sat_firmware
-
-runner = "probe-rs run --chip STM32L475VG"

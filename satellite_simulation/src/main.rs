@@ -10,12 +10,11 @@ mod routing;
 mod security;
 mod simulation;
 mod storage;
-use tokio::sync::mpsc;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
+use tokio::sync::mpsc;
 
 #[tokio::main]
 async fn main() {
-
     let matches = Command::new("Satellite Simulator")
         .version("1.0")
         .about("Simulates a satellite communication network!")
@@ -43,6 +42,7 @@ async fn main() {
     //     println!("Satellite {} can communicate with {:?}", sat_id, neighbors);
     // }
 
+    // UART LISTEN
     // let port_name = "/dev/tty.usbmodem2103";
     // let baud_rate = 115_200;
     // let serial_port_builder: SerialPortBuilder = tokio_serial::new(port_name, baud_rate);
@@ -75,7 +75,7 @@ async fn main() {
     //             Ok(bytes_read) if bytes_read > 0 => {
     //                 let received_data = String::from_utf8_lossy(&buf[..bytes_read]);
     //                 println!("Received data: {}", received_data);
-    
+
     //                 message_buffer.push_str(&received_data);
     //                 if received_data.contains("\n") {
     //                     let complete_message = message_buffer.clone();
@@ -84,7 +84,7 @@ async fn main() {
     //                     let _ = tx.send(complete_message.to_string()).await;
     //                 }
     //             }
-    
+
     //             Ok(_) => {}, // in case of 0 size data read
     //             // Err(ref e) if e.kind() == std::io::ErrorKind::WouldBlock => {
     //             //     // no data available yet, so we continue
@@ -94,8 +94,6 @@ async fn main() {
     //         }
     //     }
     // });
-
-
 }
 
 const BUFFER_SIZE: usize = 1024;

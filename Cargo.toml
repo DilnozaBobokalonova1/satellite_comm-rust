@@ -1,5 +1,5 @@
 [workspace]
-members = [ "sat_firmware","satellite_simulation", "stm32_firmware"]
+members = [ "stm32_firmware","satellite_simulation"]
 
 [profile.release]
 codegen-units = 1
