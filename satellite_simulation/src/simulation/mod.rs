@@ -1,4 +1,4 @@
-pub mod graph;
+pub mod network;
 /**
 *  ✅ Satellites need positions before they can communicate → We need a basic orbital model to determine where they are.
    ✅ Routing & communication depend on knowing satellite locations → The graph structure must update dynamically.

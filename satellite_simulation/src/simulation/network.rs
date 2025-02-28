@@ -1,26 +1,19 @@
-use super::satellite::NeighboringSatelliteInformation;
+use super::tracking::Contact;
 use crate::simulation::{satellite::Satellite, tracking::create_satellites_map};
 use rand::Rng;
+use core::f64;
 use std::collections::{HashMap, HashSet};
 
-#[derive(Debug, Clone)]
-pub struct Contact {
-    pub destination: u32,
-    pub start_time: f64,
-    pub end_time: f64,
-    pub latency: f64,
-}
-
 pub struct SatelliteNetwork {
-    satellites: HashMap<u32, Satellite>,
-    connections_graph: HashMap<u32, Vec<Contact>>,
+    satellites_dict: HashMap<u32, Satellite>,
+    satellites_network: HashMap<u32, Vec<Contact>>,
 }
 
 impl SatelliteNetwork {
     pub fn new() -> Self {
         Self {
-            satellites: HashMap::new(),
-            connections_graph: HashMap::new(),
+            satellites_dict: HashMap::new(),
+            satellites_network: HashMap::new(),
         }
     }
 
@@ -49,14 +42,14 @@ impl SatelliteNetwork {
     /**
      * Recomputes all neighbors from scratch based on the latest state.
      */
-    pub fn update_satellite_graph(&mut self) {
+    pub fn update_satellite_network(&mut self) {
         println!("🔄 Updating satellite communication graph...");
-        let updated_graph: HashMap<u32, Vec<Contact>> = create_satellites_map(&self.satellites);
+        let updated_graph: HashMap<u32, Vec<Contact>> = create_satellites_map(&self.satellites_dict);
 
         // Make ASYNC
         for (sat_id, new_contacts) in updated_graph {
             // own the values, no need to borrow for now
-            if let Some(previous_contacts) = self.connections_graph.get_mut(&sat_id) {
+            if let Some(previous_contacts) = self.satellites_network.get_mut(&sat_id) {
                 let old_destinations: HashSet<u32> =
                     previous_contacts.iter().map(|c| c.destination).collect();
                 let new_destinations: HashSet<u32> =
@@ -89,28 +82,42 @@ impl SatelliteNetwork {
                         .map(|c| c.destination)
                         .collect::<Vec<_>>()
                 );
-                self.connections_graph.insert(sat_id, new_contacts); // add new sat as neighbors
+                self.satellites_network.insert(sat_id, new_contacts); // add new sat as neighbors
             }
         }
     }
 
-    pub fn get_satellites(&self) -> Vec<Satellite> {
-        self.satellites.values().map(|sat| sat.clone()).collect()
+    pub fn find_best_relay(&self, source_satellite_id: u32, ground_position: (f64, f64)) -> Option<u32> {
+        let source = self.satellites_dict.get(&source_satellite_id)?;
+        let mut best_relay = None;
+        let mut best_score = f64::MAX;
+
+        for (_, sat) in &self.satellites_dict {
+            if sat.id == source_satellite_id {
+                continue;
+            }
+            let score = sat.calculate_relay_score(ground_position);
+            if score < best_score {
+                best_score = score;
+                best_relay = Some(sat.id);
+            }
+        }
+        best_relay
     }
 
     fn add_satellites(&mut self, satellites: &Vec<Satellite>) {
         satellites.into_iter().for_each(|sat| {
-            self.satellites.insert(sat.id, sat.clone());
+            self.satellites_dict.insert(sat.id, sat.clone());
         });
         println!("{:?}", satellites.len());
     }
 
     fn add_satellite(&mut self, sat: &Satellite) {
-        self.satellites.insert(sat.id, sat.clone());
+        self.satellites_dict.insert(sat.id, sat.clone());
     }
 
     fn update_sat_positions(&mut self, time_step: f64) {
-        self.satellites.values_mut().for_each(|sat| {
+        self.satellites_dict.values_mut().for_each(|sat| {
             sat.update_satellite_position(time_step);
         });
     }

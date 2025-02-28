@@ -7,7 +7,7 @@ use crate::{
 };
 use std::{cmp::min, collections::HashMap};
 
-use super::{graph::Contact, satellite::NeighboringSatelliteInformation};
+use super::satellite::NeighboringSatelliteInformation;
 
 const COMMUNICATION_RANGE: f64 = 1000.0;
 
@@ -41,6 +41,14 @@ const COMMUNICATION_RANGE: f64 = 1000.0;
     Hence, HashMap<u32, Vec<NeighboringSatelliteInformation>> is the return information on satellites_map creation
 
 */
+
+#[derive(Debug, Clone)]
+pub struct Contact {
+    pub destination: u32,
+    pub start_time: f64,
+    pub end_time: f64,
+    pub latency: f64,
+}
 
 /**
  * Computes a dynamic map of contacts between satellites. Each satellite

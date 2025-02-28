@@ -2,7 +2,7 @@ use std::{collections::HashMap, time::Duration};
 
 use clap::{Arg, ArgMatches, Command};
 use rand::Rng;
-use simulation::{graph::SatelliteNetwork, satellite::Satellite};
+use simulation::{network::SatelliteNetwork, satellite::Satellite};
 use tokio_serial::{SerialPort, SerialPortBuilder, SerialPortBuilderExt};
 mod common;
 mod communication;
@@ -34,7 +34,7 @@ async fn main() {
     // updating their respective positions in the graph
     let mut network = SatelliteNetwork::new();
     network.generate_satellite_network(num_satellites);
-    network.update_satellite_graph();
+    network.update_satellite_network();
 
     // let connections: HashMap<u32, Vec<u32>> = find_nearby_satellites(&network.satellites);
 
