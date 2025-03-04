@@ -70,15 +70,18 @@ impl Satellite {
         self.orbital_radius = EARTH_RADIUS + (self.altitude * 1000.0);
     }
 
-    pub(crate) fn calculate_relay_score(&self, ground_position: (f64, f64),) -> f64 {
+    pub(crate) fn calculate_relay_score(&self, ground_position: (f64, f64)) -> f64 {
         let distance_to_ground = self.get_distance_from_ground();
-        let storage_score = 1.0/(self.storage_on_board + 1.0); // avoids division by zero
-        let energy_avail_score = 1.0/(self.energy_efficiency + 1.0);
+        let storage_score = 1.0 / (self.storage_on_board + 1.0); // avoids division by zero
+        let energy_avail_score = 1.0 / (self.energy_efficiency + 1.0);
         let time_to_downlink_score = self.time_to_downlink;
-        let communication_window_score = 1.0/(self.communication_window + 1.0);
+        let communication_window_score = 1.0 / (self.communication_window + 1.0);
 
-        (distance_to_ground * 1.5) + (storage_score * 0.5) + (energy_avail_score * 0.3) +
-        (time_to_downlink_score * 1.0) + (communication_window_score * 0.2)
+        (distance_to_ground * 1.5)
+            + (storage_score * 0.5)
+            + (energy_avail_score * 0.3)
+            + (time_to_downlink_score * 1.0)
+            + (communication_window_score * 0.2)
     }
 
     // This represents the height above Earth's surface in meters.

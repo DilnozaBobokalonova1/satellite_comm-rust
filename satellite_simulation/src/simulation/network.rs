@@ -1,7 +1,7 @@
 use super::tracking::Contact;
 use crate::simulation::{satellite::Satellite, tracking::create_satellites_map};
-use rand::Rng;
 use core::f64;
+use rand::Rng;
 use std::collections::{HashMap, HashSet};
 
 pub struct SatelliteNetwork {
@@ -44,7 +44,8 @@ impl SatelliteNetwork {
      */
     pub fn update_satellite_network(&mut self) {
         println!("🔄 Updating satellite communication graph...");
-        let updated_graph: HashMap<u32, Vec<Contact>> = create_satellites_map(&self.satellites_dict);
+        let updated_graph: HashMap<u32, Vec<Contact>> =
+            create_satellites_map(&self.satellites_dict);
 
         // Make ASYNC
         for (sat_id, new_contacts) in updated_graph {
@@ -87,7 +88,11 @@ impl SatelliteNetwork {
         }
     }
 
-    pub fn find_best_relay(&self, source_satellite_id: u32, ground_position: (f64, f64)) -> Option<u32> {
+    pub fn find_best_relay(
+        &self,
+        source_satellite_id: u32,
+        ground_position: (f64, f64),
+    ) -> Option<u32> {
         let source = self.satellites_dict.get(&source_satellite_id)?;
         let mut best_relay = None;
         let mut best_score = f64::MAX;

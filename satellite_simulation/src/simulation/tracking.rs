@@ -50,6 +50,12 @@ pub struct Contact {
     pub latency: f64,
 }
 
+pub struct ContactGraph {
+    pub contacts: HashMap<u32, HashMap<u32, Vec<Contact>>>,
+}
+
+impl ContactGraph {}
+
 /**
  * Computes a dynamic map of contacts between satellites. Each satellite
  * has a list of Contact objects representing future communication windows.

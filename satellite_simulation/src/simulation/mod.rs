@@ -1,3 +1,4 @@
+pub mod cgr;
 pub mod network;
 /**
 *  ✅ Satellites need positions before they can communicate → We need a basic orbital model to determine where they are.
